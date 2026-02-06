@@ -1,12 +1,11 @@
 from psycopg import Connection
-from psycopg.errors import UniqueViolation
 
 
 def create_user(
-    conn: Connection,
-    *,
-    name: str,
-    email: str,
+        conn: Connection,
+        *,
+        name: str,
+        email: str,
 ) -> dict:
     with conn.cursor() as cur:
         cur.execute(
@@ -28,12 +27,38 @@ def create_user(
         }
 
 
+def get_user_by_id(
+        conn: Connection,
+        *,
+        user_id: int,
+) -> dict | None:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT id, name, email
+            FROM users
+            WHERE id = %s
+            """,
+            (user_id,),
+        )
+        row = cur.fetchone()
+        if row is None:
+            return None
+
+        uid, name, email = row
+        return {
+            "id": uid,
+            "name": name,
+            "email": email,
+        }
+
+
 def update_user(
-    conn: Connection,
-    *,
-    user_id: int,
-    name: str | None,
-    email: str | None,
+        conn: Connection,
+        *,
+        user_id: int,
+        name: str | None,
+        email: str | None,
 ) -> dict | None:
     with conn.cursor() as cur:
         cur.execute(
@@ -43,7 +68,7 @@ def update_user(
                 name = COALESCE(%s, name),
                 email = COALESCE(%s, email)
             WHERE id = %s
-            RETURNING id, name, email
+                RETURNING id, name, email
             """,
             (name, email, user_id),
         )
@@ -53,3 +78,12 @@ def update_user(
 
         uid, name, email = row
         return {"id": uid, "name": name, "email": email}
+
+
+def delete_user(conn: Connection, *, user_id: int) -> bool:
+    with conn.cursor() as cur:
+        cur.execute(
+            "DELETE FROM users WHERE id = %s",
+            (user_id,),
+        )
+        return cur.rowcount > 0
