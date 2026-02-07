@@ -12,7 +12,7 @@ class UserListQuery(BaseModel):
     offset: int = Field(default=0, ge=0)
 
 
-class UserListReposnse(BaseModel):
+class UserListResponse(BaseModel):
     items: list[UserOut]
     total: int
     limit: int
